@@ -6,10 +6,10 @@ include_once "functions.php";
 
 if(!loggeed_in()) redirect();
 
-if(isset($_POST['text']) && !empty($_POST['text']) && isset($_POST['image'])) {
+if(isset($_GET['id']) && !empty($_GET['id'])) {
     //если был текст сообщения. проверяем на ошибку добавления поста
-    if(!add_post($_POST['text'], $_POST['image'])) {
-        $_SESSION['error'] ='Во время добавления поста, что то пошло не так.';
+    if(!delete_post($_GET['id'])) {
+        $_SESSION['error'] ='Во время удаления поста, что то пошло не так.';
     }
 }
 

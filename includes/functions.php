@@ -58,12 +58,19 @@ function db_query($sql = '', $exec = false)
 }
 
 //вывод твитов
-function get_posts($user_id = 0)
+function get_posts($user_id = 0, $sort = false)
 {
+    $sorting = 'DESC';
+    if($sort) $sorting = 'ASC';
     //вывод твитов выбранного пользователя
-    if ($user_id > 0) return db_query("SELECT posts.*, users.name, users.login, users.avatar FROM `posts` JOIN `users` ON users.id = posts.user_id WHERE posts.user_id = $user_id;")->fetchAll();
+    if ($user_id > 0) return db_query("SELECT posts.*, users.name, users.login, users.avatar FROM `posts` 
+    JOIN `users` ON users.id = posts.user_id WHERE posts.user_id = $user_id 
+    ORDER BY `posts`.`date` $sorting;")->fetchAll();
     //запрс с соединением таблиц с определенным условием 
-    return db_query("SELECT posts.*, users.name, users.login, users.avatar FROM `posts` JOIN `users` ON users.id = posts.user_id;")->fetchAll();
+    return db_query("SELECT posts.*, users.name, users.login, users.avatar FROM `posts` 
+    JOIN `users` ON users.id = posts.user_id 
+    ORDER BY `posts`.`date` $sorting;")->fetchAll();
+    
 }
 
 //функция возвращения информации о пользователе из бд
@@ -176,5 +183,56 @@ function add_post($text, $image) {
     $sql = "INSERT INTO `posts` (`id`, `user_id`, `text`, `image`) 
     VALUES (NULL, '$user_id', '$text', '$image');";
     return db_query($sql, true);//так как запрос ничего не возвращает указываем true
-    debug($sql, true);
+    //debug($sql, true);
+}
+
+//удаление поста
+function delete_post($id) {
+    $user_id = $_SESSION['user']['id'];
+    $sql = "DELETE FROM `posts` WHERE `id` = '$id' AND `user_id` = '$user_id';";
+    return db_query($sql, true);
+}
+
+function get_likes_count($post_id) {
+    if(empty($post_id)) return 0;
+
+    return db_query("SELECT COUNT(*) FROM `likes` WHERE `post_id` = '$post_id';")->fetchColumn();
+}
+
+function is_post_liked($post_id) {
+    $user_id = $_SESSION['user']['id'];
+
+    if(empty($post_id)) return false;
+
+    $sql = "SELECT * FROM `likes` WHERE `post_id` = '$post_id' AND `user_id` = '$user_id';";
+    return db_query($sql)->rowCount() > 0;
+}
+
+function add_like($post_id) {
+    $user_id = $_SESSION['user']['id'];
+
+    if(empty($post_id)) return false;
+
+    $sql = "INSERT INTO `likes` (`post_id`, `user_id`) VALUES ('$post_id', '$user_id');";
+    return db_query($sql, true);
+}
+
+function delete_like($post_id) {
+    $user_id = $_SESSION['user']['id'];
+
+    if(empty($post_id)) return false;
+
+    $sql = "DELETE FROM `likes` WHERE `post_id` = '$post_id' AND `user_id` = '$user_id';";
+    return db_query($sql, true);
+}
+
+function get_liked_posts() {
+    $user_id = $_SESSION['user']['id'];
+
+    $sql ="SELECT posts.*, users.name, users.login, users.avatar FROM `likes` 
+    JOIN `posts` ON posts.id = likes.post_id 
+    JOIN `users` ON users.id = posts.user_id
+    WHERE likes.user_id = $user_id ";
+    return db_query($sql)->fetchAll();
+
 }
